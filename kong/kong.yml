@@ -1,0 +1,18 @@
+_format_version: "3.0"
+
+services:
+  - name: user-service
+    url: http://user-service:3001
+    routes:
+      - name: user-route
+        paths:
+          - /api/v1/users
+        strip_path: true
+
+  - name: post-service
+    url: http://post-service:3002
+    routes:
+      - name: post-route
+        paths:
+          - /api/v1/posts
+        strip_path: true

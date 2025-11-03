@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_kong_prac
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - my-network
+
+  user-service:
+    build: ./user-service
+    container_name: user-service-kong
+    ports:
+      - "3001:3001"
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      SERVICE_NAME: user-service
+    networks:
+      - my-network
+    depends_on:
+      - rabbitmq
+
+  post-service:
+    build: ./post-service
+    container_name: post-service-kong
+    ports:
+      - "3002:3002"
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      SERVICE_NAME: post-service
+    networks:
+      - my-network
+    depends_on:
+      - rabbitmq
+
+  kong:
+    image: kong:3.6
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    volumes:
+      - ./kong/kong.yml:/kong.yml:ro
+    networks:
+      - my-network
+    depends_on:
+      - user-service
+      - post-service
+
+networks:
+  my-network:
+    driver: bridge

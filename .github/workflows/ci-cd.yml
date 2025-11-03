@@ -1,0 +1,67 @@
+name: CI/CD Pipeline
+
+on:
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main, master]
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build user-service
+              run: |
+                  docker build -t user-service:latest ./user-service
+
+            - name: Build post-service
+              run: |
+                  docker build -t post-service:latest ./post-service
+
+            - name: Start services with docker-compose
+              run: |
+                  docker-compose up -d
+
+            - name: Wait for services to be ready
+              run: |
+                  echo "Waiting for services to start..."
+                  sleep 15
+
+            - name: Check running containers
+              run: |
+                  docker-compose ps
+
+            - name: Check service logs
+              if: always()
+              run: |
+                  echo "=== User Service Logs ==="
+                  docker-compose logs user-service
+                  echo "=== Post Service Logs ==="
+                  docker-compose logs post-service
+                  echo "=== Kong Logs ==="
+                  docker-compose logs kong
+
+            - name: Test user-service endpoint
+              run: |
+                  curl -f http://localhost:3001/health || echo "User service health check failed"
+
+            - name: Test post-service endpoint
+              run: |
+                  curl -f http://localhost:3002/health || echo "Post service health check failed"
+
+            - name: Stop services
+              if: always()
+              run: |
+                  docker-compose down -v
+
+            - name: Clean up Docker images
+              if: always()
+              run: |
+                  docker image prune -f
