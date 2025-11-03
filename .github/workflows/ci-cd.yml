@@ -27,7 +27,7 @@ jobs:
 
             - name: Start services with docker-compose
               run: |
-                  docker-compose up -d
+                  docker compose up -d
 
             - name: Wait for services to be ready
               run: |
@@ -36,17 +36,17 @@ jobs:
 
             - name: Check running containers
               run: |
-                  docker-compose ps
+                  docker compose ps
 
             - name: Check service logs
               if: always()
               run: |
                   echo "=== User Service Logs ==="
-                  docker-compose logs user-service
+                  docker compose logs user-service
                   echo "=== Post Service Logs ==="
-                  docker-compose logs post-service
+                  docker compose logs post-service
                   echo "=== Kong Logs ==="
-                  docker-compose logs kong
+                  docker compose logs kong
 
             - name: Test user-service endpoint
               run: |
@@ -59,7 +59,7 @@ jobs:
             - name: Stop services
               if: always()
               run: |
-                  docker-compose down -v
+                  docker compose down -v
 
             - name: Clean up Docker images
               if: always()
